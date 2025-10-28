@@ -171,6 +171,10 @@ include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS
 include { BEDGRAPH_BEDCLIP_BEDGRAPHTOBIGWIG as BEDGRAPH_BEDCLIP_BEDGRAPHTOBIGWIG_FORWARD } from '../subworkflows/nf-core/bedgraph_bedclip_bedgraphtobigwig/main'
 include { BEDGRAPH_BEDCLIP_BEDGRAPHTOBIGWIG as BEDGRAPH_BEDCLIP_BEDGRAPHTOBIGWIG_REVERSE } from '../subworkflows/nf-core/bedgraph_bedclip_bedgraphtobigwig/main'
 
+// POST PROCESSING MODULES
+include { PREPARE_GENOME as PREPARE_NEW_GENOME               } from '../subworkflows/local/prepare_genome'
+
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -597,10 +601,37 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         ch_new_gtf.set { ch_final_gtf }
     }
 
+    //
+    // SUBWORKFLOW SET: Post Processing of transcripts using new gtf
+    //
+
+    PREPARE_NEW_GENOME (
+        params.fasta,
+        ch_final_gtf.first(),
+        params.gff,
+        params.additional_fasta,
+        params.transcript_fasta,
+        params.gene_bed,
+        params.splicesites,
+        params.bbsplit_fasta_list,
+        params.star_index,
+        params.rsem_index,
+        params.salmon_index,
+        params.hisat2_index,
+        params.bbsplit_index,
+        params.gencode,
+        is_aws_igenome,
+        biotype,
+        prepareToolIndices,
+        params.genome_size
+    )
+
 
     //
     // MODULE SET: Salmon quantification of intiial reads to new transcriptome, potential for additional filtering of features.
     //
+
+    /*
     if ((params.fasta).endsWith('.gz')) {
         ch_fasta_salmon    = GUNZIP_FASTA ( [ [:], params.fasta ] ).gunzip.map { it[1] }
         ch_versions = ch_versions.mix(GUNZIP_FASTA.out.versions)
@@ -626,6 +657,7 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         params.alignment_mode,
         params.lib_type
     )
+    */
 
 }
 

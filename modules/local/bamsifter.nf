@@ -1,4 +1,7 @@
+
+
 process BAMSIFTER {
+
     tag "$meta.id"
     label 'process_bamsifter'
 
