@@ -50,7 +50,8 @@ workflow PREPARE_GENOME {
     is_aws_igenome       //   boolean: whether the genome files are from AWS iGenomes
     biotype              //    string: if additional fasta file is provided biotype value to use when appending entries to GTF file
     prepare_tool_indices //      list: tools to prepare indices for
-    size_of_genome       //    string: size of genome being indexed to alloquot the correct amount of computartional resources    
+    size_of_genome       //    string: size of genome being indexed to alloquot the correct amount of computartional resources
+    make_rsem_star            //  boolean: whether to prepare RSEM/STAR index - used in final QC
 
 //笔记 When the take keyword is used, the beginning of the workflow body must be identified with the main keyword.
     main:
@@ -176,8 +177,8 @@ workflow PREPARE_GENOME {
     // Uncompress STAR index or generate from scratch if required
     //
     ch_star_index = Channel.empty()
-    if ('star_salmon' in prepare_tool_indices) {
-        if (star_index) {
+    if ('star_salmon' in prepare_tool_indices || make_rsem_star) {
+        if (star_index && !make_rsem_star) {
             if (star_index.endsWith('.tar.gz')) {
                 ch_star_index = UNTAR_STAR_INDEX ( [ [:], star_index ] ).untar.map { it[1] }
                 ch_versions   = ch_versions.mix(UNTAR_STAR_INDEX.out.versions)
@@ -199,8 +200,8 @@ workflow PREPARE_GENOME {
     // Uncompress RSEM index or generate from scratch if required
     //
     ch_rsem_index = Channel.empty()
-    if ('star_rsem' in prepare_tool_indices) {
-        if (rsem_index) {
+    if ('star_rsem' in prepare_tool_indices || make_rsem_star) {
+        if (rsem_index && !make_rsem_star) {
             if (rsem_index.endsWith('.tar.gz')) {
                 ch_rsem_index = UNTAR_RSEM_INDEX ( [ [:], rsem_index ] ).untar.map { it[1] }
                 ch_versions   = ch_versions.mix(UNTAR_RSEM_INDEX.out.versions)

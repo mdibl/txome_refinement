@@ -173,7 +173,9 @@ include { BEDGRAPH_BEDCLIP_BEDGRAPHTOBIGWIG as BEDGRAPH_BEDCLIP_BEDGRAPHTOBIGWIG
 
 // POST PROCESSING MODULES
 include { PREPARE_GENOME as PREPARE_NEW_GENOME               } from '../subworkflows/local/prepare_genome'
-
+include { ALIGN_STAR as ALIGN_STAR_NEW                       } from '../subworkflows/local/align_star'
+include { QUANTIFY_RSEM as QUANTIFY_RSEM_NEW                 } from '../subworkflows/local/quantify_rsem'
+include { QC_TX                                              } from '../modules/local/quality_control_tx'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -623,9 +625,35 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         is_aws_igenome,
         biotype,
         prepareToolIndices,
-        params.genome_size
+        params.genome_size,
+        true
     )
 
+    ALIGN_STAR_NEW (
+        ch_filtered_reads,
+        PREPARE_NEW_GENOME.out.star_index.map { [ [:], it ] },
+        PREPARE_NEW_GENOME.out.gtf.map { [ [:], it ] },
+        params.star_ignore_sjdbgtf,
+        '',
+        params.seq_center ?: '',
+        is_aws_igenome,
+        PREPARE_NEW_GENOME.out.fasta.map { [ [:], it ] }
+    )
+
+    QUANTIFY_RSEM_NEW (
+        ALIGN_STAR_NEW.out.bam_transcript,
+        PREPARE_NEW_GENOME.out.rsem_index,
+        PREPARE_NEW_GENOME.out.transcript_fasta
+    )
+
+    QC_TX (
+        ch_final_gtf.first(),
+        GFFCOMPARE.out.combined_gtf,
+        QUANTIFY_RSEM_NEW.out.merged_counts_transcript.map { [ [id: params.gene_tx_prefix], it ] },
+        params.sample_fraction_threshold,
+        params.count_threshold,
+        params.gene_fraction_threshold
+    )
 
     //
     // MODULE SET: Salmon quantification of intiial reads to new transcriptome, potential for additional filtering of features.
