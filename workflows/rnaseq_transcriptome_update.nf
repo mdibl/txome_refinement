@@ -228,7 +228,8 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         is_aws_igenome,
         biotype,
         prepareToolIndices,
-        params.genome_size
+        params.genome_size,
+        false
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
 
@@ -642,13 +643,13 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
 
     QUANTIFY_RSEM_NEW (
         ALIGN_STAR_NEW.out.bam_transcript,
-        PREPARE_NEW_GENOME.out.rsem_index,
-        PREPARE_NEW_GENOME.out.transcript_fasta
+        PREPARE_NEW_GENOME.out.rsem_index.first(),
+        PREPARE_NEW_GENOME.out.transcript_fasta.first()
     )
 
     QC_TX (
-        ch_final_gtf.first(),
-        GFFCOMPARE.out.combined_gtf,
+        ch_final_gtf.first().map { [ [id: params.gene_tx_prefix], it ] },
+        GFFCOMPARE.out.combined_gtf.first(),
         QUANTIFY_RSEM_NEW.out.merged_counts_transcript.map { [ [id: params.gene_tx_prefix], it ] },
         params.sample_fraction_threshold,
         params.count_threshold,

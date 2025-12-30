@@ -7,7 +7,9 @@ process QC_TX {
     conda "conda-forge::python=3.9.5"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/python:3.9--1' :
-        'mdiblbiocore/qc_tx' }"
+        'docker.io/mdiblbiocore/qc_tx:latest' }"
+
+    shell = ['/bin/sh', '-euo', 'pipefail']
 
 
     input:
@@ -28,7 +30,7 @@ process QC_TX {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ''
     """
-    grep "combined" | cut -f 9| cut -d";" -f 1| sed 's/^[a-z].[^"]*//'| sed 's/"//g' > combined.genes.txt
+    grep "combined" $new_gtf | cut -f 9| cut -d";" -f 1| sed 's/^[a-z].[^"]*//'| sed 's/"//g' > combined.genes.txt
 
     post_process.py \\
     ${rsem_output} \\
