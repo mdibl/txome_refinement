@@ -1,4 +1,3 @@
-
 process QC_TX {
 
     tag "$meta.id"
@@ -22,6 +21,8 @@ process QC_TX {
 
     output:
     tuple val(meta),path("${meta.id}_filtered.gtf"), emit: filtered_gtf
+    tuple val(meta),path("${meta.id}_transcripts_to_remove.txt"), emit: transcripts_to_remove
+    tuple val(meta),path("*.html"), emit: combined_genes
 
     when:
     task.ext.when == null || task.ext.when
@@ -45,4 +46,3 @@ process QC_TX {
     cut -f 2- tmp.gtf > ${prefix}_filtered.gtf
     """
 }
-
