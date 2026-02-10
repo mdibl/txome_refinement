@@ -8,11 +8,11 @@ process GFFREAD {
         'biocontainers/gffread:0.12.1--h8b12597_0' }"
 
     input:
-    path gff
-    path reference_gtf
+    tuple val(meta), path(gff)
 
     output:
-    path "*.gtf"        , emit: gtf
+    tuple val(meta), path("*.gtf")        , emit: gtf, optional: true
+    tuple val(meta), path("*.bed")        , emit: bed, optional: true
     path "versions.yml" , emit: versions
 
     when:

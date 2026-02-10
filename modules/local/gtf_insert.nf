@@ -24,6 +24,8 @@ process GTF_INSERT {
     task.ext.when == null || task.ext.when
 
     script:
+    def args   = task.ext.args   ?: 'gtf_insert'
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     find_overlaps.py $combined_gtf
     parse_gtf_to_dict_cmp_ref.py find_overlaps.gtf
@@ -40,7 +42,7 @@ process GTF_INSERT {
     sed -i.bak 's/; Parent ".[^"]*"//' ${meta.id}.final_annotation.gtf
     sed -i.bak 's/; ID ".[^"]*"//' ${meta.id}.final_annotation.gtf
 
-    mv ${meta.id}.final_annotation.gtf ${meta.id}.gtf_insert.gtf
+    mv ${meta.id}.final_annotation.gtf ${meta.id}.${args}.gtf
     """
 }
 

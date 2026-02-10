@@ -107,6 +107,9 @@ include { SAMTOOLS_MERGE } from '../modules/local/samtools_merge.nf'
 include { ASSIGN_STRAND_AFTER_STRINGTIE  } from '../modules/local/assignstrandafterstringtie.nf'
 include { AGAT_CONVERTSPGXF2GXF } from '../modules/local/convertspgxf2gxf/main'
 include { AGAT_CONVERTSPGXF2GXF as GTF_FINAL_FORMATTING } from '../modules/local/convertspgxf2gxf/main'
+include { AGAT_CONVERTSPGXF2GXF as GTF_FINAL_FORMATTING_1 } from '../modules/local/convertspgxf2gxf/main'
+
+
 
 // include { TRINITY_NORMALIZATION as TRINITY_NORMALIZATION_PARALLEL_DoubleEnd} from '../modules/local/trinity.nf'
 // include { TRINITY_NORMALIZATION as TRINITY_NORMALIZATION_PARALLEL_SingleEnd} from '../modules/local/trinity.nf'
@@ -176,6 +179,8 @@ include { PREPARE_GENOME as PREPARE_NEW_GENOME               } from '../subworkf
 include { ALIGN_STAR as ALIGN_STAR_NEW                       } from '../subworkflows/local/align_star'
 include { QUANTIFY_RSEM as QUANTIFY_RSEM_NEW                 } from '../subworkflows/local/quantify_rsem'
 include { QC_TX                                              } from '../modules/local/quality_control_tx'
+include { RSEQC_POST_PROCESS                                 } from '../subworkflows/local/rseqc_post'
+include { GTF_INSERT as GTF_INSERT_FINAL } from '../modules/local/gtf_insert.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -591,7 +596,6 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         ch_reference_gtf,
         GFFCOMPARE.out.loci,
         params.gene_tx_prefix
-
     )
 
     //
@@ -656,11 +660,32 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         params.gene_fraction_threshold
     )
 
+    ch_newest_gtf = GTF_INSERT_FINAL (
+        QC_TX.out.filtered_gtf,
+        GFFCOMPARE.out.tracking,
+        ch_reference_gtf,
+        GFFCOMPARE.out.loci,
+        params.gene_tx_prefix
+    )
+
+    if (!params.skip_agat) {
+        ch_newest_gtf.map { [ [id:params.gene_tx_prefix], it ] }.set { ch_agat_in_1 }
+        ch_final_gtf_1 = GTF_FINAL_FORMATTING_1( ch_agat_in_1 ).final_gtf
+    } else {
+        ch_newest_gtf.set { ch_final_gtf_1 }
+    }
+
+    RSEQC_POST_PROCESS (
+        ALIGN_STAR_NEW.out.bam_transcript,
+        ch_final_gtf.first().map { [ [id: params.gene_tx_prefix], it ] },
+        params.fasta.first().map { [ [id: params.gene_tx_prefix], it ] }
+    )
+
     //
     // MODULE SET: Salmon quantification of intiial reads to new transcriptome, potential for additional filtering of features.
     //
 
-    /*
+
     if ((params.fasta).endsWith('.gz')) {
         ch_fasta_salmon    = GUNZIP_FASTA ( [ [:], params.fasta ] ).gunzip.map { it[1] }
         ch_versions = ch_versions.mix(GUNZIP_FASTA.out.versions)
@@ -669,7 +694,7 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
     }
 
 
-    MAKE_TRANSCRIPTS_FASTA_POST( ch_fasta_salmon, ch_final_gtf )
+    MAKE_TRANSCRIPTS_FASTA_POST( ch_fasta_salmon, ch_final_gtf_1 )
     ch_versions         = ch_versions.mix(MAKE_TRANSCRIPTS_FASTA_POST.out.versions)
 
     SALMON_INDEX_FINAL(ch_fasta_salmon, MAKE_TRANSCRIPTS_FASTA_POST.out.transcript_fasta)
@@ -682,11 +707,11 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         ch_strand_fastq.auto_strand,
         ch_index.first(),
         ch_new_tx.first(),
-        ch_final_gtf.first(),
+        ch_final_gtf_1.first(),
         params.alignment_mode,
         params.lib_type
     )
-    */
+
 
 }
 
