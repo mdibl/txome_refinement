@@ -678,7 +678,7 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
     RSEQC_POST_PROCESS (
         ALIGN_STAR_NEW.out.bam_transcript,
         ch_final_gtf.first().map { [ [id: params.gene_tx_prefix], it ] },
-        params.fasta.first().map { [ [id: params.gene_tx_prefix], it ] }
+        Channel.value(file(params.fasta)).map { [ [id: params.gene_tx_prefix], it ] }
     )
 
     //
