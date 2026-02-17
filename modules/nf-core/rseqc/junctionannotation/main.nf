@@ -9,7 +9,7 @@ process RSEQC_JUNCTIONANNOTATION {
 
     input:
     tuple val(meta), path(bam)
-    path  bed
+    tuple val(meta1), path(bed)
 
     output:
     tuple val(meta), path("*.xls")         , emit: xls

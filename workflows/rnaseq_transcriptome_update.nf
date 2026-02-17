@@ -511,7 +511,7 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
                 [ meta, fastq.flatten() ]
             }
             .set{ ch_bamsifter_ready_samtools_merged }
-            ch_bamsifter_ready_samtools_merged.view{ "Ready for Samtools_Merge  Meta: ${it[0]}, Path: ${it[1]}" }
+            // ch_bamsifter_ready_samtools_merged.view{ "Ready for Samtools_Merge  Meta: ${it[0]}, Path: ${it[1]}" }
 
         //
         // Merge bam files
@@ -676,7 +676,7 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
     }
 
     RSEQC_POST_PROCESS (
-        ALIGN_STAR_NEW.out.bam_transcript,
+        ALIGN_STAR_NEW.out.bam,
         ch_final_gtf.first().map { [ [id: params.gene_tx_prefix], it ] },
         Channel.value(file(params.fasta)).map { [ [id: params.gene_tx_prefix], it ] }
     )

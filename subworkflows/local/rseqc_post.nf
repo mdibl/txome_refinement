@@ -26,6 +26,9 @@ workflow RSEQC_POST_PROCESS {
     )
     ch_bed = GFFREAD.out.bed
 
+    bam.view()
+    ch_bed.view()
+
     RSEQC_JUNCTIONANNOTATION (
         bam,
         ch_bed
@@ -41,8 +44,8 @@ workflow RSEQC_POST_PROCESS {
     )
 
     ADD_ANNOTATION (
-        MAKE_INTRONS.out.introns.first(),
-        MAP_JUNCTION_READS.out.junctions
+        MAP_JUNCTION_READS.out.junctions,
+        MAKE_INTRONS.out.introns.first()
     )
 
     OUTER_JOIN_ANNOTATION (
@@ -60,8 +63,8 @@ workflow RSEQC_POST_PROCESS {
     )
 
     REPEAT_COUNT (
-        SOFT_MASK_MINE.out.masked_bed.first(),
-        EXON_TERMINUS_MINE.out.termini
+        EXON_TERMINUS_MINE.out.termini,
+        SOFT_MASK_MINE.out.masked_bed.first()
     )
 
     REPEAT_JOIN (

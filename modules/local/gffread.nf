@@ -21,11 +21,16 @@ process GFFREAD {
     script:
     def args   = task.ext.args   ?: ''
     def prefix = task.ext.prefix ?: "${gff.baseName}"
+    if (args.contains('--bed')) {
+        ext = 'bed'
+    } else {
+        ext = 'gtf'
+    }
     """
     gffread \\
         $gff \\
         $args \\
-        -o ${prefix}.gtf
+        -o ${prefix}.${ext}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         gffread: \$(gffread --version 2>&1)

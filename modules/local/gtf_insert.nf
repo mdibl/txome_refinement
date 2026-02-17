@@ -18,7 +18,7 @@ process GTF_INSERT {
     val(gene_prefix)
 
     output:
-    path("*.gtf_insert.gtf"), emit: final_gtf
+    path("${meta.id}.*.gtf"), emit: final_gtf
 
     when:
     task.ext.when == null || task.ext.when
