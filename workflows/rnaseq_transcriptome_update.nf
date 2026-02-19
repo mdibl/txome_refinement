@@ -181,6 +181,7 @@ include { QUANTIFY_RSEM as QUANTIFY_RSEM_NEW                 } from '../subworkf
 include { QC_TX                                              } from '../modules/local/quality_control_tx'
 include { RSEQC_POST_PROCESS                                 } from '../subworkflows/local/rseqc_post'
 include { GTF_INSERT as GTF_INSERT_FINAL } from '../modules/local/gtf_insert.nf'
+include { GFFCOMPARE as GFFCOMPARE_FINAL} from '../modules/local/gffcompare.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -580,7 +581,7 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
 
     GFFCOMPARE(
         ASSIGN_STRAND_AFTER_STRINGTIE.out.processed_gtf,
-        ch_combine_fasta_fai,
+        ch_combine_fasta_fai.first(),
         ch_reference_gtf
     )
     ch_versions = ch_versions.mix(GFFCOMPARE.out.versions.first())
@@ -660,11 +661,18 @@ workflow RNASEQ_TRANSCRIPTOME_UPDATE {
         params.gene_fraction_threshold
     )
 
-    ch_newest_gtf = GTF_INSERT_FINAL (
+    GFFCOMPARE_FINAL(
         QC_TX.out.filtered_gtf,
-        GFFCOMPARE.out.tracking,
+        ch_combine_fasta_fai.first(),
+        ch_reference_gtf
+    )
+
+    ch_gffcompare_gtf_final = params.onlyOneInputSample ? GFFCOMPARE_FINAL.out.annotated_gtf : GFFCOMPARE_FINAL.out.combined_gtf
+    ch_newest_gtf = GTF_INSERT_FINAL (
+        ch_gffcompare_gtf_final,
+        GFFCOMPARE_FINAL.out.tracking,
         ch_reference_gtf,
-        GFFCOMPARE.out.loci,
+        GFFCOMPARE_FINAL.out.loci,
         params.gene_tx_prefix
     )
 
