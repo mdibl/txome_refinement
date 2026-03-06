@@ -25,7 +25,7 @@ process REPEAT_JOIN {
     repeat_join.py \\
         $repeat_bed \\
         $junctions \\
-        $args > ${prefix}.repeat_mask.counts.bed
+        $args | sort | uniq > ${prefix}.repeat_mask.counts.bed
     """
 }
 
